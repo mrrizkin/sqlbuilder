@@ -133,4 +133,12 @@ class JoinBuilder extends SafeSQL
         }
         return [$sql, $this->params];
     }
+
+    public function clone(): JoinBuilder
+    {
+        $clone = new JoinBuilder();
+        $clone->joins = $this->joins;
+        $clone->params = $this->params;
+        return $clone;
+    }
 }

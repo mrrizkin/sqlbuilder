@@ -135,4 +135,12 @@ class WhereBuilder extends SafeSQL
         }
         return [trim($sql), $this->params];
     }
+
+    public function clone(): WhereBuilder
+    {
+        $clone = new WhereBuilder();
+        $clone->wheres = $this->wheres;
+        $clone->params = $this->params;
+        return $clone;
+    }
 }

@@ -211,6 +211,21 @@ class SelectBuilder extends SafeSQL
         return $this;
     }
 
+    public function clone(): SelectBuilder
+    {
+        $clone = new SelectBuilder();
+        $clone->selects = $this->selects;
+        $clone->froms = $this->froms;
+        $clone->orderBys = $this->orderBys;
+        $clone->groupBys = $this->groupBys;
+        $clone->limit = $this->limit;
+        $clone->offset = $this->offset;
+        $clone->params = $this->params;
+        $clone->whereBuilder = $this->whereBuilder->clone();
+        $clone->joinBuilder = $this->joinBuilder->clone();
+        return $clone;
+    }
+
     /**
      * Builds the SQL query based on the provided parameters.
      *
