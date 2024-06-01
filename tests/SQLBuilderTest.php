@@ -15,6 +15,17 @@ class SQLBuilderTest extends TestCase
         $this->assertEquals('SELECT "name", "email" FROM "users" WHERE "id" = ?', $sql[0]);
     }
 
+    public function testSelectAs(): void
+    {
+        $sql = SQLBuilder::select("name as n, email as e")
+            ->from("users")
+            ->where("id", "=", 1)
+            ->build();
+
+        $this->assertEquals('SELECT "name" AS "n", "email" AS "e" FROM "users" WHERE "id" = ?', $sql[0]);
+        $this->assertEquals([1], $sql[1]);
+    }
+
     public function testUpdate(): void
     {
         $sql = SQLBuilder::update("users")

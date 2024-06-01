@@ -15,7 +15,7 @@ class SafeSQL
      * @param string $s The string to be quoted.
      * @return string The quoted string.
      */
-    public function quote($s)
+    public function quote($s): string
     {
         return "'" . str_replace("'", "''", $s) . "'";
     }
@@ -26,7 +26,7 @@ class SafeSQL
      * @param string $operator The operator to be used in the query.
      * @return void
      */
-    public function operators($operator)
+    public function operators($operator): string
     {
         $operators = [
             "=",
@@ -37,6 +37,7 @@ class SafeSQL
             "<>",
             "!=",
             "LIKE",
+            "ILIKE",
             "NOT LIKE",
             "IN",
             "NOT IN",
@@ -57,7 +58,7 @@ class SafeSQL
      * @param string $s The table name to be quoted.
      * @return string The quoted table name.
      */
-    public function quoteSimpleTableName($s)
+    public function quoteSimpleTableName($s): string
     {
         if (strpos($s, '"') !== false) {
             return $s;
@@ -75,7 +76,7 @@ class SafeSQL
      * @param string $s The simple column name to be quoted.
      * @return string The quoted version of the column name.
      */
-    public function quoteSimpleColumnName($s)
+    public function quoteSimpleColumnName($s): string
     {
         if (strpos($s, '"') !== false || $s == "*") {
             return $s;
@@ -91,6 +92,13 @@ class SafeSQL
      */
     public function quoteTableName($s): string
     {
+        if (stripos($s, ' AS ') !== false) {
+            $sParts = preg_split('/\s+AS\s+/i', $s, -1, PREG_SPLIT_NO_EMPTY);
+            $column = $this->quoteTableName($sParts[0]);
+            $column .= ' AS ' . $this->quoteTableName($sParts[1]);
+            return $column;
+        }
+
         if (strpos($s, '(') !== false || strpos($s, '{{') !== false) {
             return $s;
         }
@@ -110,8 +118,15 @@ class SafeSQL
      * @param string $s The column name to be quoted.
      * @return string The quoted column name.
      */
-    public function quoteColumnName($s)
+    public function quoteColumnName($s): string
     {
+        if (stripos($s, ' AS ') !== false) {
+            $sParts = preg_split('/\s+AS\s+/i', $s, -1, PREG_SPLIT_NO_EMPTY);
+            $column = $this->quoteColumnName($sParts[0]);
+            $column .= ' AS ' . $this->quoteColumnName($sParts[1]);
+            return $column;
+        }
+
         if (strpos($s, '(') !== false || strpos($s, '{{') !== false || strpos($s, '[[') !== false) {
             return $s;
         }
