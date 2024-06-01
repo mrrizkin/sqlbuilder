@@ -69,4 +69,20 @@ class SQLBuilder
         $safeSQL = new SafeSQL();
         return $safeSQL->quote($s);
     }
+    /**
+     * @param string $s
+     */
+    public static function quoteColumn($s): string
+    {
+        $safeSQL = new SafeSQL();
+        return $safeSQL->quoteColumnName($s);
+    }
+    /**
+     * @param string $s
+     */
+    public static function quoteTable($s): string
+    {
+        $safeSQL = new SafeSQL();
+        return $safeSQL->quoteTableName($s);
+    }
 }
