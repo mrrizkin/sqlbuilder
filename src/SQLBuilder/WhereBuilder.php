@@ -28,6 +28,7 @@ class WhereBuilder extends SafeSQL
             $where = new WhereBuilder();
             $column($where);
             $this->wheres[] = [
+              "mode" => $mode,
               "column" => null,
               "operator" => null,
               "value" => null,
@@ -38,6 +39,7 @@ class WhereBuilder extends SafeSQL
         }
 
         $this->wheres[] = [
+          "mode" => $mode,
           "column" => $mode === "SAFE" ? $this->quoteColumnName($column) : $column,
           "operator" => $mode === "SAFE" ? $this->operators($operator) : $operator,
           "value" => $value,
@@ -79,14 +81,12 @@ class WhereBuilder extends SafeSQL
      *
      * ATTENTION: This method is UNSAFE and should be used with caution.
      *
-     * @param string $column The column name.
-     * @param string $operator The comparison operator. Default is "=".
-     * @param mixed $value The value to compare against. Default is null.
-     * @return WhereBuilder
+     * @param string $statement
+     * @param mixed $bind
      */
-    public function rawWhere($column, $operator = "=", $value = null): WhereBuilder
+    public function whereRaw($statement, $bind = null): WhereBuilder
     {
-        $this->w("UNSAFE", "AND", $column, $operator, $value);
+        $this->w("UNSAFE", "AND", $statement, null, $bind);
         return $this;
     }
 
@@ -95,15 +95,64 @@ class WhereBuilder extends SafeSQL
      *
      * ATTENTION: This method is UNSAFE and should be used with caution.
      *
-     * @param string $column The column name.
-     * @param string $operator The comparison operator. Default is "=".
-     * @param mixed $value The value to compare against. Default is null.
-     * @return $this The current instance of the SQLBuilder.
+     * @param string $statement
+     * @param mixed $bind
      */
-    public function orRawWhere($column, $operator = "=", $value = null): WhereBuilder
+    public function orWhereRaw($statement, $bind = null): WhereBuilder
     {
-        $this->w("UNSAFE", "OR", $column, $operator, $value);
+        $this->w("UNSAFE", "OR", $statement, null, $bind);
         return $this;
+    }
+
+    /**
+     * @return array<int,mixed>
+     * @param mixed $where
+     */
+    private function safeWhere($where): array
+    {
+        $sql = "";
+        $params = [];
+
+        if ($where["where"] !== null) {
+            $sql .= "(" . $where["where"][0] . ") ";
+            $params = $where["where"][1];
+            return [$sql, $params];
+        }
+
+        if ($where["operator"] === "IS NULL" || $where["operator"] === "IS NOT NULL") {
+            $sql .= $where["column"] . " " . $where["operator"];
+            return [$sql, $params];
+        }
+
+        if (is_array($where["value"]) && ($where["operator"] === "IN" || $where["operator"] === "NOT IN")) {
+            $sql .= $where["column"] . " " . $where["operator"];
+            $sql .= " (" . implode(", ", array_fill(0, count($where["value"]), "?")) . ") ";
+            $params = $where["value"];
+            return [$sql, $params];
+        }
+
+        $sql .= $where["column"] . " " . $where["operator"] . " ? ";
+        $params[] = $where["value"];
+        return [$sql, $params];
+    }
+    /**
+     * @param mixed $where
+     * @return array<int,mixed>|array
+     */
+    private function unsafeWhere($where): array
+    {
+        $sql = "";
+        $params = [];
+
+        if ($where["where"] !== null) {
+            $sql .= "(" . $where["where"][0] . ") ";
+            $params = $where["where"][1];
+            return [$sql, $params];
+        }
+
+        $sql .= $where["column"];
+        $params = $where["value"];
+        return [$sql, $params];
     }
 
     /**
@@ -119,19 +168,16 @@ class WhereBuilder extends SafeSQL
                 $sql .= $where["type"] . " ";
             }
 
-            if ($where["where"] !== null) {
-                $sql .= "(" . $where["where"][0] . ") ";
-                $this->params = array_merge($this->params, $where["where"][1]);
-            } else {
-                if (is_array($where["value"])) {
-                    $sql .= $where["column"] . " " . $where["operator"];
-                    $sql .= " (" . implode(", ", array_fill(0, count($where["value"]), "?")) . ") ";
-                    $this->params = array_merge($this->params, $where["value"]);
-                } else {
-                    $sql .= $where["column"] . " " . $where["operator"] . " ? ";
-                    $this->params[] = $where["value"];
-                }
+            if ($where["mode"] === "SAFE") {
+                $safe = $this->safeWhere($where);
+                $sql .= $safe[0];
+                $this->params = array_merge($this->params, $safe[1]);
+                continue;
             }
+
+            $unsafe = $this->unsafeWhere($where);
+            $sql .= $unsafe[0];
+            $this->params = array_merge($this->params, $unsafe[1]);
         }
         return [trim($sql), $this->params];
     }

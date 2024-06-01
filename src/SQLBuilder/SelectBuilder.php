@@ -2,6 +2,8 @@
 
 namespace SQLBuilder;
 
+use Exception;
+
 /**
  * Class SelectBuilder
  *
@@ -94,6 +96,64 @@ class SelectBuilder extends SafeSQL
     public function orWhere($column, $operator = "=", $value = null): SelectBuilder
     {
         $this->whereBuilder->orWhere($column, $operator, $value);
+        return $this;
+    }
+
+    /**
+     * Adds a WHERE clause to the SQL query.
+     *
+     * @param string $column The column name.
+     * @param string $operator The comparison operator. Default is "=".
+     * @param mixed $value The value to compare against. Default is null.
+     * @return SelectBuilder
+     */
+    public function whereRaw(): SelectBuilder
+    {
+        $args = func_get_args();
+        $statement = "";
+        $bind = [];
+
+        if (count($args) == 1) {
+            $statement = $args[0];
+        } elseif (count($args) >= 2) {
+            $statement = $args[0];
+            for ($i = 1; $i < count($args); $i++) {
+                $bind[] = $args[$i];
+            }
+        } else {
+            throw new Exception("Invalid number of arguments provided.");
+        }
+
+        $this->whereBuilder->whereRaw($statement, $bind);
+        return $this;
+    }
+
+    /**
+     * Adds an OR condition to the WHERE clause of the query.
+     *
+     * @param string $column The column name.
+     * @param string $operator The comparison operator. Default is "=".
+     * @param mixed $value The value to compare against. Default is null.
+     * @return $this The current instance of the SQLBuilder class.
+     */
+    public function orWhereRaw(): SelectBuilder
+    {
+        $args = func_get_args();
+        $statement = "";
+        $bind = [];
+
+        if (count($args) == 1) {
+            $statement = $args[0];
+        } elseif (count($args) >= 2) {
+            $statement = $args[0];
+            for ($i = 1; $i < count($args); $i++) {
+                $bind[] = $args[$i];
+            }
+        } else {
+            throw new Exception("Invalid number of arguments provided.");
+        }
+
+        $this->whereBuilder->orWhereRaw($statement, $bind);
         return $this;
     }
 
@@ -270,6 +330,7 @@ class SelectBuilder extends SafeSQL
             $sql .= " OFFSET ?";
             $this->params[] = $this->offset;
         }
+
         return [$sql, $this->params];
     }
 }

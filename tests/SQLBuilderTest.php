@@ -26,6 +26,17 @@ class SQLBuilderTest extends TestCase
         $this->assertEquals([1], $sql[1]);
     }
 
+    public function testSelectWhereRaw(): void
+    {
+        $sql = SQLBuilder::select("name, email")
+            ->from("users")
+            ->whereRaw("LOWER(name) = ?", "john")
+            ->build();
+
+        $this->assertEquals('SELECT "name", "email" FROM "users" WHERE LOWER(name) = ?', $sql[0]);
+        $this->assertEquals(["john"], $sql[1]);
+    }
+
     public function testUpdate(): void
     {
         $sql = SQLBuilder::update("users")
