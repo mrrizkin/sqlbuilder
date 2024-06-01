@@ -13,6 +13,7 @@ class SQLBuilderTest extends TestCase
             ->build();
 
         $this->assertEquals('SELECT "name", "email" FROM "users" WHERE "id" = ?', $sql[0]);
+        $this->assertEquals([1], $sql[1]);
     }
 
     public function testSelectAs(): void
@@ -45,6 +46,7 @@ class SQLBuilderTest extends TestCase
             ->build();
 
         $this->assertEquals('UPDATE "users" SET "name" = ? WHERE "id" = ?', $sql[0]);
+        $this->assertEquals(["John", 1], $sql[1]);
     }
 
     public function testDelete(): void
@@ -54,6 +56,7 @@ class SQLBuilderTest extends TestCase
             ->build();
 
         $this->assertEquals('DELETE FROM "users" WHERE "id" = ?', $sql[0]);
+        $this->assertEquals([1], $sql[1]);
     }
 
     public function testInsert(): void
@@ -64,6 +67,7 @@ class SQLBuilderTest extends TestCase
             ->build();
 
         $this->assertEquals('INSERT INTO "users" ("name", "email") VALUES (?, ?)', $sql[0]);
+        $this->assertEquals(["John", "john@mail.com"], $sql[1]);
     }
 
     public function testClone(): void
@@ -92,6 +96,7 @@ class SQLBuilderTest extends TestCase
             ->build();
 
         $this->assertEquals('SELECT "name", "email" FROM "users" WHERE "id" = ?', $sql[0]);
+        $this->assertEquals(["1; DROP TABLE users"], $sql[1]);
     }
 
     public function testSQLInjection2(): void
@@ -102,5 +107,6 @@ class SQLBuilderTest extends TestCase
             ->build();
 
         $this->assertEquals('SELECT "name", "email" FROM "users" WHERE "id" = ?', $sql[0]);
+        $this->assertEquals([""], $sql[1]);
     }
 }
